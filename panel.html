@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Bot WhatsApp & Telegram</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f5f7fb; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        /* Header */
+        header { background: linear-gradient(135deg, #4361ee, #3f37c9); color: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .navbar { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: bold; }
+        .nav-links { display: flex; list-style: none; align-items: center; }
+        .nav-links li { margin-left: 1.5rem; }
+        .nav-links a { color: white; text-decoration: none; transition: opacity 0.3s; }
+        .nav-links a:hover { opacity: 0.8; }
+        .auth-buttons { display: flex; gap: 1rem; }
+        
+        /* Auth Modal */
+        .auth-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .auth-content { background: white; padding: 2rem; border-radius: 10px; max-width: 400px; width: 90%; }
+        .auth-tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid #ddd; }
+        .auth-tab { padding: 0.8rem 1.5rem; cursor: pointer; border: none; background: none; flex: 1; }
+        .auth-tab.active { border-bottom: 2px solid #4361ee; color: #4361ee; font-weight: bold; }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-control { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; }
+        .social-login { text-align: center; margin: 1.5rem 0; }
+        .social-btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.8rem 1.5rem; margin: 0.5rem; border: 1px solid #ddd; border-radius: 5px; background: white; cursor: pointer; text-decoration: none; color: #333; }
+        .social-btn.google { border-color: #db4437; color: #db4437; }
+        .social-btn.facebook { border-color: #4267B2; color: #4267B2; }
+        
+        /* Hero */
+        .hero { text-align: center; padding: 4rem 0; background: white; margin-bottom: 2rem; }
+        .hero h1 { color: #4361ee; margin-bottom: 1rem; font-size: 2.5rem; }
+        .hero p { color: #666; font-size: 1.2rem; max-width: 600px; margin: 0 auto 2rem; }
+        
+        /* File Structure */
+        .file-structure { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 3rem; }
+        .file-tree { font-family: 'Courier New', monospace; background: #2d3748; color: #e2e8f0; padding: 1.5rem; border-radius: 5px; margin: 1rem 0; }
+        .file-tree .folder { color: #63b3ed; }
+        .file-tree .file { color: #68d391; }
+        
+        /* Services */
+        .services { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 4rem; }
+        .service-card { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .service-card:hover { transform: translateY(-5px); }
+        .service-card h3 { color: #4361ee; margin-bottom: 1rem; font-size: 1.3rem; }
+        .price { font-size: 1.5rem; font-weight: bold; color: #4361ee; margin: 1rem 0; }
+        .btn { display: inline-block; padding: 0.8rem 1.5rem; background: #4361ee; color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; transition: background 0.3s; }
+        .btn:hover { background: #3f37c9; }
+        .btn-outline { background: transparent; border: 2px solid #4361ee; color: #4361ee; }
+        .btn-outline:hover { background: #4361ee; color: white; }
+        .btn-disabled { background: #ccc; cursor: not-allowed; }
+        
+        /* Payment */
+        .payment-section { background: white; padding: 3rem; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 3rem; }
+        .payment-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 2rem; }
+        .payment-method { text-align: center; padding: 1.5rem; border: 2px solid #e9ecef; border-radius: 10px; transition: border-color 0.3s; }
+        .payment-method:hover { border-color: #4361ee; }
+        .payment-method img { max-width: 100px; margin-bottom: 1rem; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 2rem; border-radius: 10px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .close { float: right; cursor: pointer; font-size: 1.5rem; color: #666; }
+        
+        /* User Dashboard */
+        .user-dashboard { display: none; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .user-info { display: flex; align-items: center; margin-bottom: 1.5rem; }
+        .user-avatar { width: 50px; height: 50px; border-radius: 50%; background: #4361ee; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 1rem; }
+        .download-history { margin-top: 1.5rem; }
+        .download-item { padding: 1rem; border: 1px solid #eee; border-radius: 5px; margin-bottom: 0.5rem; }
+        
+        /* Footer */
+        footer { background: #2d3748; color: white; text-align: center; padding: 3rem 0; margin-top: 4rem; }
+        .whatsapp-float { position: fixed; bottom: 20px; right: 20px; background: #25D366; color: white; padding: 1rem; border-radius: 50%; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; }
+        
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; }
+            .nav-links { margin-top: 1rem; }
+            .nav-links li { margin: 0 0.5rem; }
+            .hero h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <div class="logo">BotPanel</div>
+                <ul class="nav-links">
+                    <li><a href="#home">Beranda</a></li>
+                    <li><a href="#structure">Struktur File</a></li>
+                    <li><a href="#services">Layanan</a></li>
+                    <li><a href="#payment">Pembayaran</a></li>
+                    <li><a href="#contact">Kontak</a></li>
+                    <div class="auth-buttons">
+                        <button class="btn btn-outline" onclick="showAuthModal('login')" id="loginBtn">Login</button>
+                        <button class="btn" onclick="showAuthModal('register')" id="registerBtn">Daftar</button>
+                        <div id="userMenu" style="display: none;">
+                            <span id="userName"></span>
+                            <button class="btn btn-outline" onclick="logout()">Logout</button>
+                        </div>
+                    </div>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal">
+        <div class="auth-content">
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Daftar</button>
+                <button class="auth-tab" onclick="switchAuthTab('forgot')">Lupa Sandi</button>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form active">
+                <h3>Login ke Akun</h3>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Email atau Username</label>
+                        <input type="text" class="form-control" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" class="form-control" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">Login</button>
+                </form>
+                
+                <div class="social-login">
+                    <p>Atau login dengan:</p>
+                    <button class="social-btn google" onclick="socialLogin('google')">
+                        <span>Google</span>
+                    </button>
+                    <button class="social-btn facebook" onclick="socialLogin('facebook')">
+                        <span>Facebook</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="auth-form">
+                <h3>Daftar Akun Baru</h3>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>Nama Lengkap</label>
+                        <input type="text" class="form-control" id="regName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="regEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" class="form-control" id="regUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" class="form-control" id="regPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Konfirmasi Password</label>
+                        <input type="password" class="form-control" id="regConfirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">Daftar</button>
+                </form>
+            </div>
+            
+            <!-- Forgot Password Form -->
+            <div id="forgotForm" class="auth-form">
+                <h3>Reset Password</h3>
+                <form onsubmit="handleForgotPassword(event)">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="forgotEmail" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">Kirim Link Reset</button>
+                </form>
+            </div>
+        </div>
+    </div>
+            <!-- Register Form -->
+        <div id="registerForm" class="auth-form">
+            <h3>Daftar Akun Baru</h3>
+            <form onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" class="form-control" id="regName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" class="form-control" id="regUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" class="form-control" id="regPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Konfirmasi Password</label>
+                    <input type="password" class="form-control" id="regConfirmPassword" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Daftar</button>
+            </form>
+        </div>
+        
+        <!-- Forgot Password Form -->
+        <div id="forgotForm" class="auth-form">
+            <h3>Reset Password</h3>
+            <form onsubmit="handleForgotPassword(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="forgotEmail" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Kirim Link Reset</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- User Dashboard -->
+<div id="userDashboard" class="user-dashboard container">
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div>
+            <h3 id="dashboardUserName">User</h3>
+            <p id="dashboardUserEmail">user@example.com</p>
+        </div>
+    </div>
+    
+    <div class="download-history">
+        <h4>Download History</h4>
+        <div id="downloadList">
+            <!-- Download history akan diisi oleh JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Hero -->
+<section id="home" class="hero">
+    <div class="container">
+        <h1>Panel Bot WhatsApp & Telegram</h1>
+        <p>Dapatkan panel bot WhatsApp lengkap dengan source code. Pembayaran mudah via Dana & QRIS.</p>
+        <a href="#structure" class="btn">Lihat Struktur File</a>
+    </div>
+</section>
+
+<!-- File Structure -->
+<section id="structure" class="container">
+    <div class="file-structure">
+        <h2 style="text-align: center; margin-bottom: 2rem; color: #4361ee;">📁 Struktur File Panel</h2>
+        <p style="text-align: center; margin-bottom: 1.5rem;">Setiap paket termasuk file lengkap berikut:</p>
+        
+        <div class="file-tree">
+            <div class="folder">📁 panel-whatsapp-basic/</div>
+            <div class="file">&nbsp; ├── 📄 index.js (Main bot file)</div>
+            <div class="file">&nbsp; ├── 📄 config.json (Configuration)</div>
+            <div class="file">&nbsp; ├── 📄 package.json (Dependencies)</div>
+            <div class="file">&nbsp; ├── 📄 README.txt (Instructions)</div>
+            <div class="folder">&nbsp; └── 📁 sessions/ (Auto-generated)</div>
+        </div>
+    </div>
+</section>
+
+<!-- Services -->
+<section id="services" class="container">
+    <h2 style="text-align: center; margin-bottom: 3rem; color: #4361ee; font-size: 2rem;">Pilihan Paket</h2>
+    <div class="services">
+        <!-- Paket Gratis -->
+        <div class="service-card">
+            <h3>🆓 Paket Gratis</h3>
+            <p>Coba fitur dasar tanpa biaya</p>
+            <div class="price">GRATIS</div>
+            <ul style="list-style: none; margin: 1.5rem 0;">
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ File struktur lengkap</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Bot WhatsApp dasar</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Auto reply message</li>
+                <li style="padding: 0.5rem 0;">✅ Panduan instalasi</li>
+            </ul>
+            <button class="btn btn-outline" onclick="selectPackage('free')" id="freeBtn">Download Gratis</button>
+        </div>
+
+        <!-- Paket Premium -->
+        <div class="service-card">
+            <h3>⭐ Paket Premium</h3>
+            <p>Fitur lengkap untuk bisnis</p>
+            <div class="price">Rp 50.000</div>
+            <ul style="list-style: none; margin: 1.5rem 0;">
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Semua fitur gratis</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Auto broadcast</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Media handler</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Database simulation</li>
+                <li style="padding: 0.5rem 0;">✅ Priority support</li>
+            </ul>
+            <button class="btn" onclick="selectPackage('premium')" id="premiumBtn">Beli Sekarang</button>
+        </div>
+                <!-- Paket Enterprise -->
+        <div class="service-card">
+            <h3>🚀 Paket Enterprise</h3>
+            <p>Solusi lengkap perusahaan</p>
+            <div class="price">Rp 150.000</div>
+            <ul style="list-style: none; margin: 1.5rem 0;">
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Semua fitur premium</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Multiple bot support</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Custom features</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Installation support</li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">✅ Free updates 3 bulan</li>
+                <li style="padding: 0.5rem 0;">✅ Dedicated support</li>
+            </ul>
+            <button class="btn" onclick="selectPackage('enterprise')" id="enterpriseBtn">Beli Sekarang</button>
+        </div>
+    </div>
+</section>
+
+<!-- Payment Methods -->
+<section id="payment" class="container">
+    <div class="payment-section">
+        <h2 style="text-align: center; margin-bottom: 2rem; color: #4361ee;">Metode Pembayaran</h2>
+        <p style="text-align: center; margin-bottom: 2rem;">Bayar mudah dengan Dana atau QRIS</p>
+        
+        <div class="payment-methods">
+            <div class="payment-method">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgODAiPjxwYXRoIGZpbGw9IiMwMEE4NUYiIGQ9Ik0xODMuNCAyMC42Yy0yLjYtMi42LTYuOC0yLjYtOS40IDBsLTcuOCA3LjhjLTIuNiAyLjYtMi42IDYuOCAwIDkuNGw3LjggNy44YzIuNiAyLjYgNi44IDIuNiA5LjQgMGw3LjgtNy44YzIuNi0yLjYgMi42LTYuOCAwLTkuNGwtNy44LTcuOHoiLz48cGF0aCBmaWxsPSIjRkZDNjAwIiBkPSJNMTIwIDQwYzAgMTEtOSAyMC0yMCAyMHMtMjAtOS0yMC0yMCA5LTIwIDIwLTIwIDIwIDkgMjAgMjB6Ii8+PHBhdGggZmlsbD0iIzAwQTg1RiIgZD0iTTEwMCAyMGgyMHY0MGgtMjB6Ii8+PHBhdGggZmlsbD0iI0ZGRiIgZD0iTTEwNSAzMGgxMHYyMGgtMTB6Ii8+PHBhdGggZmlsbD0iIzAwQTg1RiIgZD0iTTE2MCAyMGgyMHY0MGgtMjB6Ii8+PHBhdGggZmlsbD0iI0ZGRiIgZD0iTTE2NSAzMGgxMHYyMGgtMTB6Ii8+PC9zdmc+" alt="Dana">
+                <h3>Dana</h3>
+                <p>081235144080</p>
+                <p>A/N: RANDIEXESHOP</p>
+            </div>
+            
+            <div class="payment-method">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgODAiPjxwYXRoIGZpbGw9IiMzNzMzNzMiIGQ9Ik00MCAyMGgxNjBjMTEgMCAyMCA5IDIwIDIwdjIwYzAgMTEtOSAyMC0yMCAyMEg0MGMtMTEgMC0yMC05LTIwLTIwVjQwYzAtMTEgOS0yMCAyMC0yMHoiLz48cGF0aCBmaWxsPSIjRkZGIiBkPSJNNjAgNDBjMC03LjcgNi4zLTE0IDE0LTE0aDkyYzcuNyAwIDE0IDYuMyAxNCAxNHYwYzAgNy43LTYuMyAxNC0xNCAxNEg3NGMtNy43IDAtMTQtNi4zLTE0LTE0di0weiIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik04OCAzOGg2NHY0SDg4eiIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik04OCA0OGg0OHY0SDg4eiIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik04OCA1OGgzMnY0SDg4eiIvPjxjaXJjbGUgZmlsbD0iI0ZGRiIgY3g9IjE2MCIgY3k9IjQwIiByPSI4Ii8+PC9zdmc+" alt="QRIS">
+                <h3>QRIS All Payment</h3>
+                <p>Scan kode QR untuk bayar</p>
+                <p>NMID: ID2025390222961</p>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 10px;">
+            <h4>📞 Konfirmasi Pembayaran</h4>
+            <p>Setelah transfer, kirim bukti ke:</p>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #4361ee;">WhatsApp: 081235144080</p>
+            <p>Sertakan: Nama, Paket yang dibeli, dan Username</p>
+        </div>
+    </div>
+</section>
+
+<!-- Contact -->
+<section id="contact" class="container" style="margin-bottom: 3rem;">
+    <div style="background: white; padding: 3rem; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center;">
+        <h2 style="color: #4361ee; margin-bottom: 1rem;">Butuh Bantuan?</h2>
+        <p style="margin-bottom: 2rem;">Hubungi kami via WhatsApp untuk pertanyaan atau bantuan teknis</p>
+        <a href="https://wa.me/6281235144080" class="btn" style="background: #25D366;">💬 WhatsApp Support</a>
+    </div>
+</section>
+
+<!-- Modal -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div id="modalContent">
+            <!-- Konten akan diisi JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- WhatsApp Float -->
+<a href="https://wa.me/6281235144080" class="whatsapp-float" target="_blank">
+    💬
+</a>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <h3>BotPanel</h3>
+        <p>Solusi lengkap bot WhatsApp dan Telegram</p>
+        <div style="margin: 2rem 0;">
+            <p>📱 WhatsApp: 081235144080</p>
+            <p>💳 Dana: 081235144080 (RANDIEXESHOP)</p>
+            <p>📋 QRIS: NMID ID2025390222961</p>
+        </div>
+        <p>&copy; 2023 BotPanel. All rights reserved.</p>
+    </div>
+</footer>
+    <script>
+        // Data paket dengan link download yang FIX
+        const packages = {
+            free: {
+                name: "Paket Gratis",
+                price: "GRATIS",
+                downloadUrl: "#",
+                instructions: [
+                    "Download file panel gratis",
+                    "Extrak zip file ke folder", 
+                    "Buka terminal: cd panel-whatsapp-basic",
+                    "Install: npm install",
+                    "Jalankan: npm start",
+                    "Scan QR code dengan WhatsApp"
+                ],
+                files: [
+                    "📄 index.js (Main bot file)",
+                    "📄 config.json (Configuration)", 
+                    "📄 package.json (Dependencies)",
+                    "📄 README.txt (Instructions)",
+                    "📁 sessions/ (Auto-generated)"
+                ]
+            },
+            premium: {
+                name: "Paket Premium", 
+                price: "Rp 50.000",
+                downloadUrl: "#",
+                instructions: [
+                    "Transfer Rp 50.000 via Dana/QRIS",
+                    "Konfirmasi ke WhatsApp: 081235144080",
+                    "Download panel setelah dikonfirmasi",
+                    "Extrak file dan buka folder",
+                    "Jalankan: npm install && npm start", 
+                    "Scan QR code untuk connect"
+                ],
+                files: [
+                    "📄 index.js (Enhanced bot)",
+                    "📄 config.json (Advanced config)",
+                    "📄 package.json (Dependencies)",
+                    "📄 features.js (Premium features)",
+                    "📄 README.txt (Full guide)",
+                    "📁 sessions/ (Auto-generated)"
+                ]
+            },
+            enterprise: {
+                name: "Paket Enterprise",
+                price: "Rp 150.000", 
+                downloadUrl: "#",
+                instructions: [
+                    "Transfer Rp 150.000 via Dana/QRIS",
+                    "Konfirmasi ke WhatsApp: 081235144080", 
+                    "Download panel enterprise",
+                    "Extrak dan setup configuration",
+                    "Jalankan bot dengan custom features",
+                    "Scan QR code untuk connect",
+                    "Dapatkan dedicated support"
+                ],
+                files: [
+                    "📄 index.js (Enterprise bot)",
+                    "📄 config.json (Custom config)", 
+                    "📄 package.json (Dependencies)",
+                    "📄 features.js (Advanced features)",
+                    "📄 database.js (User management)",
+                    "📄 broadcast.js (Auto broadcast)",
+                    "📄 README.txt (Complete guide)",
+                    "📁 sessions/ (Auto-generated)"
+                ]
+            }
+        };
+
+        // User management
+        let currentUser = null;
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        let downloadHistory = JSON.parse(localStorage.getItem('downloadHistory')) || [];
+
+        // Check login status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            setupDownloadLinks();
+            
+            // Smooth scroll
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+            
+            // Close modal klik luar
+            document.getElementById('paymentModal').addEventListener('click', function(e) {
+                if (e.target === this) closeModal();
+            });
+            
+            document.getElementById('authModal').addEventListener('click', function(e) {
+                if (e.target === this) closeAuthModal();
+            });
+        });
+
+        // Auth functions
+        function showAuthModal(tab) {
+            document.getElementById('authModal').style.display = 'flex';
+            switchAuthTab(tab);
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').style.display = 'none';
+        }
+
+        function switchAuthTab(tab) {
+            // Reset semua tabs
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            
+            // Aktifkan tab yang dipilih
+            document.querySelector(`.auth-tab[onclick="switchAuthTab('${tab}')"]`).classList.add('active');
+            document.getElementById(tab + 'Form').classList.add('active');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const user = users.find(u => (u.email === email || u.username === email) && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                updateUI();
+                closeAuthModal();
+                alert('Login berhasil!');
+            } else {
+                alert('Email/username atau password salah!');
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('Password tidak cocok!');
+                return;
+            }
+            
+            if (users.find(u => u.email === email)) {
+                alert('Email sudah terdaftar!');
+                return;
+            }
+            
+            if (users.find(u => u.username === username)) {
+                alert('Username sudah terdaftar!');
+                return;
+            }
+            
+            const newUser = {
+                id: Date.now(),
+                name,
+                email,
+                username,
+                password,
+                createdAt: new Date().toISOString()
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            alert('Pendaftaran berhasil! Silakan login.');
+            switchAuthTab('login');
+        }
+
+        function handleForgotPassword(event) {
+            event.preventDefault();
+            const email = document.getElementById('forgotEmail').value;
+            alert(`Link reset password telah dikirim ke ${email} (simulasi)`);
+            closeAuthModal();
+        }
+
+        function socialLogin(provider) {
+            alert(`Login dengan ${provider} berhasil! (simulasi)`);
+            // Simulate social login
+            const socialUser = {
+                id: Date.now(),
+                name: 'Social User',
+                email: `user@${provider}.com`,
+                username: `social_${Date.now()}`,
+                provider: provider
+            };
+            
+            currentUser = socialUser;
+            localStorage.setItem('currentUser', JSON.stringify(socialUser));
+            updateUI();
+            closeAuthModal();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateUI();
+        }
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            const userMenu = document.getElementById('userMenu');
+            const userName = document.getElementById('userName');
+            const userDashboard = document.getElementById('userDashboard');
+            const dashboardUserName = document.getElementById('dashboardUserName');
+            const dashboardUserEmail = document.getElementById('dashboardUserEmail');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (currentUser) {
+                loginBtn.style.display = 'none';
+                registerBtn.style.display = 'none';
+                userMenu.style.display = 'flex';
+                userDashboard.style.display = 'block';
+                
+                userName.textContent = currentUser.name;
+                dashboardUserName.textContent = currentUser.name;
+                dashboardUserEmail.textContent = currentUser.email;
+                userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+                
+                updateDownloadHistory();
+            } else {
+                loginBtn.style.display = 'inline-block';
+                registerBtn.style.display = 'inline-block';
+                userMenu.style.display = 'none';
+                userDashboard.style.display = 'none';
+            }
+        }
+
+        function updateDownloadHistory() {
+            const downloadList = document.getElementById('downloadList');
+            const userDownloads = downloadHistory.filter(d => d.userId === currentUser.id);
+            
+            if (userDownloads.length === 0) {
+                downloadList.innerHTML = '<p>Belum ada download</p>';
+            } else {
+                downloadList.innerHTML = userDownloads.map(download => `
+                    <div class="download-item">
+                        <strong>${download.package}</strong><br>
+                        <small>${new Date(download.timestamp).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Setup download links dengan file yang sebenarnya
+        function setupDownloadLinks() {
+            // Create sample file content
+            const fileContent = `
+// Sample WhatsApp Bot Code
+const { Client } = require('whatsapp-web.js');
+const client = new Client();
+console.log('Bot WhatsApp by RANDIEXESHOP');
+            `.trim();
+            
+            // Create blob for download
+            const blob = new Blob([fileContent], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            
+            // Set download URLs untuk semua paket
+            packages.free.downloadUrl = url;
+            packages.premium.downloadUrl = url;
+            packages.enterprise.downloadUrl = url;
+        }
+
+        // Fungsi pilih paket
+        function selectPackage(pkg) {
+            if (!currentUser && pkg !== 'free') {
+                alert('Silakan login atau daftar terlebih dahulu!');
+                showAuthModal('login');
+                return;
+            }
+            
+            const modal = document.getElementById('paymentModal');
+            const content = document.getElementById('modalContent');
+            const package = packages[pkg];
+            
+            if (pkg === 'free') {
+                content.innerHTML = `
+                    <h2 style="color: #4361ee; margin-bottom: 1rem;">${package.name}</h2>
+                    <p style="margin-bottom: 1.5rem;">Panel gratis bisa langsung diunduh:</p>
+                    
+                    <div style="background: #e8f5e8; padding: 1.5rem; border-radius: 10px; text-align: center; margin-bottom: 1.5rem;">
+                        <a href="${package.downloadUrl}" download="panel-whatsapp-basic.zip" class="btn" onclick="trackDownload('${pkg}')" style="display: block; margin: 1rem 0; font-size: 1.1rem;">
+                            📥 Download Panel Gratis
+                        </a>
+                    </div>
+                    
+                    <div style="background: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <h4 style="color: #4361ee; margin-bottom: 1rem;">📁 File Included:</h4>
+                        <ul style="list-style: none;">
+                            ${package.files.map(file => `<li style="padding: 0.3rem 0;">${file}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 1.5rem; border-radius: 10px;">
+                        <h4 style="color: #856404; margin-bottom: 1rem;">📋 Cara Install:</h4>
+                        <ol style="margin-left: 1.5rem;">
+                            ${package.instructions.map(step => `<li style="margin-bottom: 0.5rem;">${step}</li>`).join('')}
+                        </ol>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <h2 style="color: #4361ee; margin-bottom: 1rem;">${package.name}</h2>
+                    <p style="font-size: 1.2rem; margin-bottom: 1.5rem;">Harga: <strong>${package.price}</strong></p>
+                    
+                    <div style="background: #fff3cd; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <h4 style="color: #856404; margin-bottom: 1rem;">💳 Cara Bayar:</h4>
+                        <div style="text-align: left;">
+                            <p><strong>Via Dana:</strong></p>
+                            <p>➤ 081235144080 (RANDIEXESHOP)</p>
+                            
+                            <p style="margin-top: 1rem;"><strong>Via QRIS:</strong></p>
+                            <p>➤ Scan kode QR di aplikasi bank/e-wallet</p>
+                            <p>➤ NMID: ID2025390222961</p>
+                            
+                            <p style="margin-top: 1rem;"><strong>Konfirmasi:</strong></p>
+                            <p>➤ Kirim bukti ke WhatsApp: 081235144080 </p>
+                            <p>➤ Sertakan nama dan paket yang dibeli</p>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" onclick="simulatePayment('${pkg}')" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                        ✅ Saya Sudah Bayar (Demo)
+                    </button>
+                `;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Simulasi pembayaran
+        function simulatePayment(pkg) {
+            const content = document.getElementById('modalContent');
+            const package = packages[pkg];
+            
+            content.innerHTML = `
+                <div style="text-align: center;">
+                    <h2 style="color: #28a745; margin-bottom: 1rem;">✅ Pembayaran Berhasil!</h2>
+                    <p style="margin-bottom: 1.5rem;">Terima kasih! Panel ${package.name} sudah bisa diunduh:</p>
+                    
+                    <div style="background: #e8f5e8; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <a href="${package.downloadUrl}" download="panel-whatsapp-${pkg}.zip" class="btn" onclick="trackDownload('${pkg}')" style="display: block; margin: 1rem 0; font-size: 1.1rem; background: #28a745;">
+                            📥 Download ${package.name}
+                        </a>
+                    </div>
+                    
+                    <div style="background: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <h4 style="color: #4361ee; margin-bottom: 1rem;">📁 File yang Didapat:</h4>
+                        <ul style="list-style: none;">
+                            ${package.files.map(file => `<li style="padding: 0.3rem 0;">${file}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 1.5rem; border-radius: 10px;">
+                        <h4 style="color: #856404; margin-bottom: 1rem;">🚀 Cara Install:</h4>
+                        <ol style="margin-left: 1.5rem;">
+                            ${package.instructions.map(step => `<li style="margin-bottom: 0.5rem;">${step}</li>`).join('')}
+                        </ol>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Tracking download
+        function trackDownload(pkg) {
+            if (currentUser) {
+                const downloadRecord = {
+                    id: Date.now(),
+                    userId: currentUser.id,
+                    package: packages[pkg].name,
+                    timestamp: new Date().toISOString()
+                };
+                
+                downloadHistory.push(downloadRecord);
+                localStorage.setItem('downloadHistory', JSON.stringify(downloadHistory));
+                updateDownloadHistory();
+            }
+            
+            console.log(`Download tracked: ${pkg} at ${new Date().toLocaleString()}`);
+            setTimeout(() => {
+                alert('Download berhasil! File panel telah diunduh.');
+                closeModal();
+            }, 1000);
+        }
+
+        // Tutup modal
+        function closeModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
